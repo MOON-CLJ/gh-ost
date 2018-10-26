@@ -563,17 +563,18 @@ func (this *Migrator) atomicCutOver() (err error) {
 	atomic.StoreInt64(&this.migrationContext.InCutOverCriticalSectionFlag, 1)
 	defer atomic.StoreInt64(&this.migrationContext.InCutOverCriticalSectionFlag, 0)
 
-	okToUnlockTable := make(chan bool, 4)
-	defer func() {
-		okToUnlockTable <- true
-		this.applier.DropAtomicCutOverSentryTableIfExists()
-	}()
-
 	atomic.StoreInt64(&this.migrationContext.AllEventsUpToLockProcessedInjectedFlag, 0)
 
 	lockOriginalSessionIdChan := make(chan int64, 2)
 	tableLocked := make(chan error, 2)
 	tableUnlocked := make(chan error, 2)
+	okToUnlockTable := make(chan bool, 4)
+	defer func() {
+		okToUnlockTable <- true
+		<- tableUnlocked
+		this.applier.DropAtomicCutOverSentryTableIfExists()
+	}()
+
 	go func() {
 		if err := this.applier.AtomicCutOverMagicLock(lockOriginalSessionIdChan, tableLocked, okToUnlockTable, tableUnlocked); err != nil {
 			log.Errore(err)

@@ -1084,6 +1084,10 @@ func (this *Migrator) iterateChunks() error {
 			return nil
 		}
 		// Enqueue copy operation; to be executed by executeWriteFuncs()
+		// TODO
+		if base.FileExists("/tmp/kakaka") {
+			log.Infof("iterateChunks want to write copyRowsQueue")
+		}
 		this.copyRowsQueue <- copyRowsFunc
 	}
 	return nil
@@ -1162,9 +1166,19 @@ func (this *Migrator) executeWriteFuncs() error {
 			}
 		default:
 			{
+				// TODO
+				if base.FileExists("/tmp/kakaka") {
+					log.Infof("executeWriteFuncs select default branch")
+				}
+
 				select {
 				case copyRowsFunc := <-this.copyRowsQueue:
 					{
+						// TODO
+						if base.FileExists("/tmp/kakaka") {
+							log.Infof("executeWriteFuncs read copyRowsQueue")
+						}
+
 						copyRowsStartTime := time.Now()
 						// Retries are handled within the copyRowsFunc
 						if err := copyRowsFunc(); err != nil {

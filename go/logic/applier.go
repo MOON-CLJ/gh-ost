@@ -755,15 +755,18 @@ func (this *Applier) CreateAtomicCutOverSentryTable() error {
 
 // AtomicCutOverMagicLock
 func (this *Applier) AtomicCutOverMagicLock(sessionIdChan chan int64, tableLocked chan<- error, okToUnlockTable <-chan bool, tableUnlocked chan<- error) error {
+	defer func() {
+		sessionIdChan <- -1
+		tableLocked <- fmt.Errorf("Unexpected error in AtomicCutOverMagicLock(), injected to release blocking channel reads")
+		tableUnlocked <- fmt.Errorf("Unexpected error in AtomicCutOverMagicLock(), injected to release blocking channel reads")
+	}()
+
 	tx, err := this.db.Begin()
 	if err != nil {
 		tableLocked <- err
 		return err
 	}
 	defer func() {
-		sessionIdChan <- -1
-		tableLocked <- fmt.Errorf("Unexpected error in AtomicCutOverMagicLock(), injected to release blocking channel reads")
-		tableUnlocked <- fmt.Errorf("Unexpected error in AtomicCutOverMagicLock(), injected to release blocking channel reads")
 		tx.Rollback()
 	}()
 

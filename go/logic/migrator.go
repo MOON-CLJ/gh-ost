@@ -1086,7 +1086,7 @@ func (this *Migrator) iterateChunks() error {
 		// Enqueue copy operation; to be executed by executeWriteFuncs()
 		// TODO
 		if base.FileExists("/tmp/kakaka") {
-			log.Infof("iterateChunks want to write copyRowsQueue")
+			log.Infof("kakaka iterateChunks want to write copyRowsQueue")
 		}
 		this.copyRowsQueue <- copyRowsFunc
 	}
@@ -1168,7 +1168,7 @@ func (this *Migrator) executeWriteFuncs() error {
 			{
 				// TODO
 				if base.FileExists("/tmp/kakaka") {
-					log.Infof("executeWriteFuncs select default branch")
+					log.Infof("kakaka executeWriteFuncs select default branch")
 				}
 
 				select {
@@ -1176,7 +1176,7 @@ func (this *Migrator) executeWriteFuncs() error {
 					{
 						// TODO
 						if base.FileExists("/tmp/kakaka") {
-							log.Infof("executeWriteFuncs read copyRowsQueue")
+							log.Infof("kakaka executeWriteFuncs read copyRowsQueue")
 						}
 
 						copyRowsStartTime := time.Now()

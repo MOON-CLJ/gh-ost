@@ -1160,8 +1160,13 @@ func (this *Migrator) executeWriteFuncs() error {
 		select {
 		case eventStruct := <-this.applyEventsQueue:
 			{
+				// TODO
+				applyEventStartTime := time.Now()
 				if err := this.onApplyEventStruct(eventStruct); err != nil {
 					return err
+				}
+				if base.FileExists("/tmp/kakakaka") {
+					log.Infof("kakaka onApplyEventStruct cost %v", time.Since(applyEventStartTime))
 				}
 			}
 		default:

@@ -988,6 +988,24 @@ func (this *Applier) ApplyDMLEventQueries(dmlEvents [](*binlog.BinlogDMLEvent)) 
 	var totalDelta int64
 
 	err := func() error {
+		// TODO
+		buildDMLEventQueryStartTime := time.Now()
+		batch_queries := make([]string, len(dmlEvents))
+		batch_args := make([][]interface{}, len(dmlEvents))
+		for _, dmlEvent := range dmlEvents {
+			query, args, rowDelta, err := this.buildDMLEventQuery(dmlEvent)
+			if err != nil {
+				return err
+			}
+			batch_queries = append(batch_queries, query)
+			batch_args = append(batch_args, args)
+			totalDelta += rowDelta
+		}
+		buildDMLEventQueryDuration := time.Since(buildDMLEventQueryStartTime)
+
+		// TODO
+		execQueryStartTime := time.Now()
+
 		tx, err := this.db.Begin()
 		if err != nil {
 			return err
@@ -1005,19 +1023,20 @@ func (this *Applier) ApplyDMLEventQueries(dmlEvents [](*binlog.BinlogDMLEvent)) 
 		if _, err := tx.Exec(sessionQuery); err != nil {
 			return rollback(err)
 		}
-		for _, dmlEvent := range dmlEvents {
-			query, args, rowDelta, err := this.buildDMLEventQuery(dmlEvent)
-			if err != nil {
-				return rollback(err)
-			}
+
+		for i, query := range batch_queries {
+			args := batch_args[i]
 			if _, err := tx.Exec(query, args...); err != nil {
 				err = fmt.Errorf("%s; query=%s; args=%+v", err.Error(), query, args)
 				return rollback(err)
 			}
-			totalDelta += rowDelta
 		}
 		if err := tx.Commit(); err != nil {
 			return err
+		}
+		execQueryDuration := time.Since(execQueryStartTime)
+		if base.FileExists("/tmp/kakakaka") {
+			log.Infof("kakaka buildDMLEventQueryDuration %v execQueryDuration %v", buildDMLEventQueryDuration, execQueryDuration)
 		}
 		return nil
 	}()
